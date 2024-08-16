@@ -19,11 +19,6 @@ jobs:
       - name: checkout the repo
         uses: actions/checkout@v2
 
-      - name: Set up Docker
-        uses: actions/setup-docker@v2
-        
-      - name: Check Docker version
-        run: docker --version
       - name: Check for dockerenv file
         run: (ls /.dockerenv && echo Found dockerenv) || (echo No dockerenv)
       
