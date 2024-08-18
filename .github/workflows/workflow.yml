@@ -62,7 +62,10 @@
 
 name: Test GitHub Actions
 
-on: push
+on:
+  push:
+    branches:
+        - main
 
 jobs:
   run-tests:
