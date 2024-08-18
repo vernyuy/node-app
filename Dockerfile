@@ -13,7 +13,7 @@ RUN npm install --omit=dev
 # Copy transpiled files
 COPY ./build ./build
 
-EXPOSE 80
+EXPOSE 8080
 
 CMD ["node", "build/index.js"]
 
