@@ -70,7 +70,7 @@ jobs:
             --task-definition $task_definition_arn \
             --query 'taskDefinition')
 
-          new_task_definition=$(echo $new_task_definition | jq --arg IMAGE "<your-account-id>.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/my-ecr-repository:latest" '.containerDefinitions[0].image = $IMAGE')
+          new_task_definition=$(echo $new_task_definition | jq --arg IMAGE "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.REPO_NAME }}:latest" '.containerDefinitions[0].image = $IMAGE')
 
           new_task_definition=$(echo $new_task_definition | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
 
