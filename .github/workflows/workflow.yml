@@ -108,3 +108,6 @@ jobs:
           docker build -t my-ecr-repo .
           docker tag my-ecr-repo:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.REPO_NAME }}:latest
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.REPO_NAME }}:latest
+      - name: Update cluster
+        run: |
+          aws ecs update-service - cluster ${{ secrets.ECS_CLUSTER_NAME }} - service ${{ secrets.ECS_SERVICE_NAME }} - force-new-deployment
