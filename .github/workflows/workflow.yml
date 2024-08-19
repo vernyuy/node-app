@@ -55,27 +55,44 @@ jobs:
           docker build -t my-ecr-repo .
           docker tag my-ecr-repo:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.REPO_NAME }}:latest
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.REPO_NAME }}:latest
-      - name: Update cluster
+      # - name: Update cluster
+      - name: Download task definition 
         run: |
-          ecs_service_name=${{ secrets.ECS_SERVICE_NAME }}
-          ecs_cluster_name=${{ secrets.ECS_CLUSTER_NAME }}
+          aws ecs describe-task-definition - task-definition etap-development - query taskDefinition > task-definition.json
+      - name: Fill in new image ID in task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json 
+          container-name: ${{ secrets.ECS_SERVICE_NAME }}
+          image: ${{ steps.build-image.outputs.image }}
 
-          task_definition_arn=$(aws ecs describe-services \
-            --cluster $ecs_cluster_name \
-            --services $ecs_service_name \
-            --query 'services[0].taskDefinition' \
-            --output text)
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1 
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ secrets.ECS_SERVICE_NAME }}
+          cluster: ${{ secrets.ECS_CLUSTER_NAME }}
+        # run: |
+        #   ecs_service_name=${{ secrets.ECS_SERVICE_NAME }}
+        #   ecs_cluster_name=${{ secrets.ECS_CLUSTER_NAME }}
 
-          new_task_definition=$(aws ecs describe-task-definition \
-            --task-definition $task_definition_arn \
-            --query 'taskDefinition')
+        #   task_definition_arn=$(aws ecs describe-services \
+        #     --cluster $ecs_cluster_name \
+        #     --services $ecs_service_name \
+        #     --query 'services[0].taskDefinition' \
+        #     --output text)
 
-          new_task_definition=$(echo $new_task_definition | jq --arg IMAGE "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.REPO_NAME }}:latest" '.containerDefinitions[0].image = $IMAGE')
+        #   new_task_definition=$(aws ecs describe-task-definition \
+        #     --task-definition $task_definition_arn \
+        #     --query 'taskDefinition')
 
-          new_task_definition=$(echo $new_task_definition | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+        #   new_task_definition=$(echo $new_task_definition | jq --arg IMAGE "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.REPO_NAME }}:latest" '.containerDefinitions[0].image = $IMAGE')
 
-          registered_task_definition=$(echo $new_task_definition | aws ecs register-task-definition --cli-input-json /dev/stdin)
+        #   new_task_definition=$(echo $new_task_definition | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
 
-          new_task_definition_arn=$(echo $registered_task_definition | jq -r '.taskDefinition.taskDefinitionArn')
+        #   registered_task_definition=$(echo $new_task_definition | aws ecs register-task-definition --cli-input-json /dev/stdin)
 
-          aws ecs update-service --cluster $ecs_cluster_name --service $ecs_service_name --task-definition $new_task_definition_arn
+        #   new_task_definition_arn=$(echo $registered_task_definition | jq -r '.taskDefinition.taskDefinitionArn')
+
+        #   aws ecs update-service --cluster $ecs_cluster_name --service $ecs_service_name --task-definition $new_task_definition_arn
