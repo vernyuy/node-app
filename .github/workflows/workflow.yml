@@ -57,9 +57,12 @@ jobs:
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.REPO_NAME }}:latest
       - name: Update cluster
         run: |
+          ecs_service_name=${{ secrets.ECS_SERVICE_NAME }}
+          ecs_cluster_name=${{ secrets.ECS_CLUSTER_NAME }}
+
           task_definition_arn=$(aws ecs describe-services \
-            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-            --services ${{ secrets.ECS_SERVICE_NAME }} \
+            --cluster $ecs_cluster_name \
+            --services $ecs_service_name \
             --query 'services[0].taskDefinition' \
             --output text)
 
@@ -75,4 +78,4 @@ jobs:
 
           new_task_definition_arn=$(echo $registered_task_definition | jq -r '.taskDefinition.taskDefinitionArn')
 
-          aws ecs update-service --cluster ${{ secrets.ECS_CLUSTER_NAME }} --service ${{ secrets.ECS_SERVICE_NAME }} --task-definition $new_task_definition_arn
+          aws ecs update-service --cluster $ecs_cluster_name --service $ecs_service_name --task-definition $new_task_definition_arn
