@@ -4,7 +4,7 @@ import * as os from "os";
 const app = express();
 
 app.get("/", (request, response) => {
-  response.send(`Hello world!  ECS + ECR + FARGATE`)
+  response.send(`Hello world!  ECS + ECR`)
 })
 
 const PORT = 80
