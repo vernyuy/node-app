@@ -55,24 +55,36 @@ jobs:
           docker build -t my-ecr-repo .
           docker tag my-ecr-repo:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.REPO_NAME }}:latest
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.REPO_NAME }}:latest
-      # - name: Update cluster
-      - name: Download task definition 
-        run: |
-          aws ecs describe-task-definition --task-definition etap-development --query taskDefinition > task-definition.json
-      - name: Fill in new image ID in task definition
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json 
-          container-name: ${{ secrets.ECS_SERVICE_NAME }}
-          image: ${{ steps.build-image.outputs.image }}
 
-      - name: Deploy Amazon ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1 
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: ${{ secrets.ECS_SERVICE_NAME }}
-          cluster: ${{ secrets.ECS_CLUSTER_NAME }}
+      - name: Force deployment
+        run: |
+          aws ecs update-service --cluster ${{ secrets.ECS_CLUSTER_NAME }} --service ${{ secrets.ECS_SERVICE_NAME }} --force-new-deployment
+            # - name: Update cluster
+
+
+
+      # - name: Download task definition 
+      #   run: |
+      #     aws ecs describe-task-definition --task-definition etap-development --query taskDefinition > task-definition.json
+      # - name: Fill in new image ID in task definition
+      #   id: task-def
+      #   uses: aws-actions/amazon-ecs-render-task-definition@v1
+      #   with:
+      #     task-definition: task-definition.json 
+      #     container-name: ${{ secrets.ECS_SERVICE_NAME }}
+      #     image: ${{ steps.build-image.outputs.image }}
+
+      # - name: Deploy Amazon ECS task definition
+      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1 
+      #   with:
+      #     task-definition: ${{ steps.task-def.outputs.task-definition }}
+      #     service: ${{ secrets.ECS_SERVICE_NAME }}
+      #     cluster: ${{ secrets.ECS_CLUSTER_NAME }}
+
+
+
+
+
         # run: |
         #   ecs_service_name=${{ secrets.ECS_SERVICE_NAME }}
         #   ecs_cluster_name=${{ secrets.ECS_CLUSTER_NAME }}
