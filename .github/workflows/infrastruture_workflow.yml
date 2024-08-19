@@ -33,7 +33,7 @@ jobs:
           aws-region: "us-east-1"
       - name: Deploy to AWS
         run: |
-          cd infrastruccture; cdk deploy CdkHelloWorldStack
+          cd infrastructure; cdk deploy CdkHelloWorldStack
       
       - name: Retrieve ALB DNS name
         id: alb_dns
