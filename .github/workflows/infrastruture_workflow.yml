@@ -1,0 +1,44 @@
+name: AWS Service CI/CD
+
+on:
+  push:
+    branches: 
+      - main-infrastructure
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+      - uses: actions/checkout@v3
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+      - name: Install the CDK Dependency
+        run: |
+          npm install -g aws-cdk
+      - name: Install other dependencies
+        run: |
+          cd infrastruccture
+          npm install
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "us-east-1"
+      - name: Deploy to AWS
+        run: |
+          cd infrastruccture; cdk deploy CdkHelloWorldStack
+      
+      - name: Retrieve ALB DNS name
+        id: alb_dns
+        run: |
+          alb_name="eda-ecs-alb-eda"
+          alb_dns=$(aws elbv2 describe-load-balancers --names $alb_name --query "LoadBalancers[0].DNSName" --output text)
+          echo "ALB DNS: $alb_dns"
+          echo "::set-output name=alb_dns::$alb_dns"
